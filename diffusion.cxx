@@ -19,12 +19,12 @@ int main(){
   const double tEnd = 5 ;
   const double D = 1;
 
-  const int N  = 200;
+  const int N  = 400;
   const double xmin = -20;
   const double xmax = 20;
   const double dx = (xmax-xmin)/(N-1) ;
 
-  double dt = dx;
+  double dt = 1*dx;
   double t = 0;
   const int Na = 10;
   const int Nk = int(tEnd/Na/dt);
@@ -72,10 +72,35 @@ void step(double* const f1, double* const f0,
   double* d=new double[N];
   double* u=new double[N];
   double* l=new double[N];
+  
+  double Faktor;
 
-  for(int i=0;i<N;i++) d[i] = 1.0 + 2.0*D*dt/(dx*dx);
+  for(int i=0;i<N;i++) d[i] = 1.0 + 2.0*D*dt/(dx*dx); // Matrix befüllen, wie in Aufgabenstellung
   for(int i=0;i<N;i++) u[i] = - D*dt/(dx*dx);
   for(int i=0;i<N;i++) l[i] = - D*dt/(dx*dx);
+  
+  for(int i=1;i<N;i++) // Die Vektoren vorwärts durchgehen
+  {
+    Faktor = d[i-1]/l[i]; // Faktor für Elimination von l ausrechnen
+    l[i] *= Faktor; // jeweils dranmultiplizieren
+    d[i] *= Faktor;
+    u[i] *= Faktor;
+    f0[i] *= Faktor;
+//     l[i] = l[i] - l[i]/d[i-1] * d[i-1]
+//     d[i] = d[i] - l[i]/d[i-1] * u[i-1];
+    l[i] = 0.0; // das neue l ist immer 0
+    d[i] -= u[i-1]; // untere Zeile minus obere Zeile rechnen
+    f0[i]-= f0[i-1];
+    //u[i] -= u[i-1];
+  }
+  
+  f1[N-1] = f0[N-1]/d[N-1]; // ersten backward Schritt extra machen
+  
+  for(int i=N-2;i>=0;i--) // Die Vektoren rückwärts durchgehen
+  {
+    f1[i] = (f0[i]-u[i]*f1[i+1])/d[i]; // den nächsten Zeitschritt der Formel entsprechend ausrechnen
+  }
+  
 
 
   delete[] d;
